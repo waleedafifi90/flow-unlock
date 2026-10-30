@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root {
+      --plum: #522D60;
+      --berry: #80426E;
+      --peach: #F2A67B;
+      --sun: #FFD38B;
+      --ink: #1E1024;
+      --text: #FBEFE6;
+      --muted: rgba(251, 239, 230, .62);
+      --line: rgba(255, 211, 139, .16);
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: 340px; margin: 0; padding: 16px;
+      font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(120% 60% at 100% 0%, rgba(242,166,123,.35), transparent 60%),
+        radial-gradient(90% 60% at 0% 100%, rgba(128,66,110,.55), transparent 65%),
+        linear-gradient(160deg, var(--plum), var(--ink));
+    }
+
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .logo { width: 46px; height: 46px; flex: none; filter: drop-shadow(0 6px 14px rgba(242,166,123,.35)); }
+    h1 { margin: 0; font-size: 17px; letter-spacing: .2px; }
+    .tagline { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .card {
+      position: relative; padding: 14px 16px; border-radius: 16px; margin-bottom: 12px;
+      background: rgba(255,255,255,.06); border: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    .card::before {
+      content: ""; position: absolute; inset-block: 14px; inset-inline-start: 0;
+      width: 3px; border-radius: 3px; background: var(--muted); transition: background .2s;
+    }
+    .card.ok::before { background: var(--sun); }
+    .card.warn::before { background: var(--peach); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #statusTitle { margin: 0; font-size: 18px; font-weight: 700; color: var(--muted); }
+    .card.ok #statusTitle { color: var(--sun); }
+    .card.warn #statusTitle { color: var(--peach); }
+    .card hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+    #status { margin: 0; color: var(--muted); }
+
+    .switch { position: relative; width: 52px; height: 30px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch span {
+      position: absolute; inset: 0; cursor: pointer; border-radius: 30px;
+      background: rgba(30,16,36,.7); border: 1px solid var(--line); transition: .25s;
+    }
+    .switch span::before {
+      content: ""; position: absolute; width: 22px; height: 22px; top: 3px; right: 4px;
+      border-radius: 50%; background: var(--muted); transition: .25s;
+    }
+    .switch input:checked + span { background: linear-gradient(90deg, var(--berry), var(--peach)); border-color: transparent; }
+    .switch input:checked + span::before { transform: translateX(-21px); background: var(--sun); }
+    .switch input:focus-visible + span { outline: 2px solid var(--sun); outline-offset: 2px; }
+
+    button, .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px; border-radius: 12px; cursor: pointer;
+      font: inherit; font-weight: 700; text-decoration: none; transition: transform .1s, filter .2s;
+    }
+    button:hover, .btn:hover { filter: brightness(1.08); }
+    button:active, .btn:active { transform: scale(.98); }
+    button:focus-visible, .btn:focus-visible, summary:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+    .primary { border: 0; color: var(--ink); background: linear-gradient(90deg, var(--sun), var(--peach)); box-shadow: 0 6px 20px rgba(242,166,123,.3); font-size: 14px; }
+    .ghost { color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+    .stack { display: grid; gap: 8px; margin-bottom: 12px; }
+
+    details { border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--line); margin-bottom: 12px; }
+    summary { list-style: none; cursor: pointer; padding: 11px 14px; color: var(--muted); display: flex; justify-content: space-between; border-radius: 14px; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "⌄"; transition: transform .2s; }
+    details[open] summary::after { transform: rotate(180deg); }
+    .adv { padding: 0 14px 14px; display: grid; gap: 8px; }
+    label { color: var(--muted); font-size: 12px; }
+    input[type=text], input[type=number] {
+      display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border-radius: 10px;
+      font: inherit; color: var(--text); background: rgba(30,16,36,.55); border: 1px solid var(--line);
+    }
+    input[type=text]:focus, input[type=number]:focus { outline: none; border-color: var(--peach); }
+
+    footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .credit { color: var(--muted); font-size: 12px; }
+    .credit b { color: var(--text); font-weight: 600; }
+    .social {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px;
+      color: var(--sun); text-decoration: none; font-weight: 600; font-size: 12px;
+      background: rgba(255,211,139,.08); border: 1px solid var(--line);
+    }
+    .social:hover { background: rgba(255,211,139,.16); }
+    .social svg { width: 15px; height: 15px; fill: currentColor; }
+  </style>
+</head>
+<body>
+  <header>
+    <img class="logo" src="icons/icon.svg" alt="" />
+    <div>
+      <h1>Flow Unlock</h1>
+      <p class="tagline">افتح Google Flow من أي مكان</p>
+    </div>
+  </header>
+
+  <section class="card" id="card">
+    <div class="card-head">
+      <p id="statusTitle">…</p>
+      <label class="switch" title="تشغيل / إيقاف">
+        <input type="checkbox" id="enabled" aria-label="تشغيل الإضافة" /><span></span>
+      </label>
+    </div>
+    <hr />
+    <p id="status">…</p>
+  </section>
+
+  <div class="stack">
+    <button id="open" class="primary">افتح Google Flow</button>
+    <button id="reload" class="ghost">تحديث الصفحة</button>
+  </div>
+
+  <details>
+    <summary>متقدم (إذا جوجل غيّر الأرقام)</summary>
+    <div class="adv">
+      <label>RPC id<input type="text" id="rpcid" dir="ltr" placeholder="cPZSdc" /></label>
+      <label>Flag index<input type="number" id="flagIndex" dir="ltr" placeholder="30" /></label>
+      <button id="saveAdv" class="ghost">حفظ</button>
+    </div>
+  </details>
+
+  <footer>
+    <span class="credit">صنع بواسطة <b>Waleed Afifi</b></span>
+    <a class="social" href="https://www.linkedin.com/in/walafifi/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+      LinkedIn
+    </a>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
