@@ -7,7 +7,15 @@ const SCRIPTS = [
   { id: "flow-unlock-bridge", js: ["bridge.js"], world: "ISOLATED" }
 ];
 
-async function sync() {
+// Runs one at a time: install, startup and worker wake can all fire together, and
+// two interleaved unregister/register passes would fail on the duplicate id.
+let queue = Promise.resolve();
+function sync() {
+  queue = queue.then(syncNow, syncNow);
+  return queue;
+}
+
+async function syncNow() {
   const { enabled = true } = await chrome.storage.local.get("enabled");
   let regError = null;
   try {
@@ -37,3 +45,6 @@ chrome.runtime.onMessage.addListener((msg) => {
 chrome.storage.onChanged.addListener((changes) => {
   if ("enabled" in changes) sync();
 });
+// Also on every worker wake: a Chrome update or profile sync can drop the
+// persisted registration, and nothing else would put it back.
+sync();

@@ -120,8 +120,21 @@
         const out = patch(await res.clone().text());
         if (out === null) return res;
         const headers = new Headers(res.headers);
+        // Both describe the original wire bytes, not the rewritten body.
         headers.delete("content-length");
-        return new Response(out, { status: res.status, statusText: res.statusText, headers });
+        headers.delete("content-encoding");
+        const next = new Response(out, { status: res.status, statusText: res.statusText, headers });
+        // A constructed Response has an empty url and type "default"; carry the
+        // real ones over (clones too) in case the app checks them.
+        const keepMeta = (r) => {
+          for (const key of ["url", "redirected", "type"]) {
+            Object.defineProperty(r, key, { value: res[key], configurable: true });
+          }
+          const clone = r.clone.bind(r);
+          Object.defineProperty(r, "clone", { value: () => keepMeta(clone()), configurable: true });
+          return r;
+        };
+        return keepMeta(next);
       } catch (err) {
         console.warn("[Flow Unlock] fetch patch failed", err);
         state.error = String(err);
@@ -148,7 +161,11 @@
       ...desc,
       get() {
         const raw = desc.get.call(this);
-        if (!targets.has(this) || this.readyState !== 4 || typeof raw !== "string") return raw;
+        if (!targets.has(this) || typeof raw !== "string") return raw;
+        // Hold partial chunks back: if the app parses the reply while it is still
+        // loading, it would read the unpatched flag before we can flip it.
+        if (this.readyState === 3) return "";
+        if (this.readyState !== 4) return raw;
         if (!cache.has(this)) {
           let out = null;
           try {
