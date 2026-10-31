@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Flow Unlock",
   "version": "2.1.0",
-  "minimum_chrome_version": "102",
+  "minimum_chrome_version": "111",
   "description": "يفتح Google Flow من أي دولة بتعديل فحص الدولة داخل المتصفح، بدون بروكسي أو VPN.",
   "permissions": ["scripting", "storage"],
   "host_permissions": ["https://flow.google.com/*", "https://labs.google/*"],
