@@ -12,7 +12,16 @@
     flagIndex: 30,      // region-availability flag inside its payload
     extraIndexes: [31]  // neighbouring eligibility flag, only flipped when explicitly false
   };
-  const state = (window.__flowUnlock = { patched: 0, before: null });
+  // Besides the patch count, keep enough detail for the popup's diagnostics to
+  // tell "script never ran" from "RPC id changed" from "flag moved".
+  const state = (window.__flowUnlock = {
+    patched: 0,
+    before: null,
+    seen: [],       // rpcids of every batchexecute call this page made
+    payloadLen: null,
+    falseIdx: [],   // indexes that were false in the config payload before patching
+    error: null
+  });
   // Mirror state onto <html> so bridge.js (another JS world) can report it to the popup.
   const publish = () => {
     if (document.documentElement) document.documentElement.dataset.flowUnlock = JSON.stringify(state);
@@ -28,9 +37,16 @@
   function isTarget(rawUrl) {
     try {
       const u = new URL(rawUrl, location.href);
-      return u.origin === location.origin &&
-        u.pathname.endsWith("/data/batchexecute") &&
-        (u.searchParams.get("rpcids") || "").split(",").includes(spec.rpcid);
+      if (!u.pathname.endsWith("/batchexecute")) return false;
+      const sameOrigin = u.origin === location.origin;
+      const ids = (u.searchParams.get("rpcids") || "").split(",").filter(Boolean);
+      // Cross-origin calls are only recorded (prefixed with their host), never patched.
+      const fresh = ids.map((id) => (sameOrigin ? id : `${u.host}:${id}`)).filter((id) => !state.seen.includes(id));
+      if (fresh.length) {
+        state.seen.push(...fresh);
+        publish();
+      }
+      return sameOrigin && ids.includes(spec.rpcid);
     } catch {
       return false;
     }
@@ -55,6 +71,8 @@
         try { payload = JSON.parse(env[2]); } catch { continue; }
         if (!Array.isArray(payload)) continue;
 
+        state.payloadLen = payload.length;
+        state.falseIdx = payload.flatMap((v, idx) => (v === false ? [idx] : []));
         while (payload.length <= spec.flagIndex) payload.push(null);
         state.before = payload[spec.flagIndex];
         payload[spec.flagIndex] = true;
@@ -80,8 +98,11 @@
     }
     if (changed) {
       state.patched++;
-      publish();
+      state.error = null;
+    } else {
+      state.error = `reply had no ${spec.rpcid} payload`;
     }
+    publish();
     return changed ? lines.join("\n") : null;
   }
 
@@ -103,6 +124,8 @@
         return new Response(out, { status: res.status, statusText: res.statusText, headers });
       } catch (err) {
         console.warn("[Flow Unlock] fetch patch failed", err);
+        state.error = String(err);
+        publish();
         return res;
       }
     };
@@ -128,7 +151,13 @@
         if (!targets.has(this) || this.readyState !== 4 || typeof raw !== "string") return raw;
         if (!cache.has(this)) {
           let out = null;
-          try { out = patch(raw); } catch (err) { console.warn("[Flow Unlock] xhr patch failed", err); }
+          try {
+            out = patch(raw);
+          } catch (err) {
+            console.warn("[Flow Unlock] xhr patch failed", err);
+            state.error = String(err);
+            publish();
+          }
           cache.set(this, out ?? raw);
         }
         return cache.get(this);

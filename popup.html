@@ -85,6 +85,11 @@
       font: inherit; color: var(--text); background: rgba(30,16,36,.55); border: 1px solid var(--line);
     }
     input[type=text]:focus, input[type=number]:focus { outline: none; border-color: var(--peach); }
+    #diag {
+      margin: 0; padding: 10px; max-height: 180px; overflow: auto; border-radius: 10px;
+      font: 11px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-all;
+      color: var(--sun); background: rgba(30,16,36,.65); border: 1px solid var(--line); user-select: all;
+    }
 
     footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
     .credit { color: var(--muted); font-size: 12px; }
@@ -129,6 +134,8 @@
       <label>RPC id<input type="text" id="rpcid" dir="ltr" placeholder="cPZSdc" /></label>
       <label>Flag index<input type="number" id="flagIndex" dir="ltr" placeholder="30" /></label>
       <button id="saveAdv" class="ghost">حفظ</button>
+      <button id="diagBtn" class="ghost">نسخ التشخيص</button>
+      <pre id="diag" dir="ltr" hidden></pre>
     </div>
   </details>
 

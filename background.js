@@ -9,21 +9,31 @@ const SCRIPTS = [
 
 async function sync() {
   const { enabled = true } = await chrome.storage.local.get("enabled");
-  const existing = await chrome.scripting.getRegisteredContentScripts({ ids: SCRIPTS.map((s) => s.id) });
-  if (existing.length) {
-    await chrome.scripting.unregisterContentScripts({ ids: existing.map((s) => s.id) });
+  let regError = null;
+  try {
+    const existing = await chrome.scripting.getRegisteredContentScripts({ ids: SCRIPTS.map((s) => s.id) });
+    if (existing.length) {
+      await chrome.scripting.unregisterContentScripts({ ids: existing.map((s) => s.id) });
+    }
+    if (enabled) {
+      await chrome.scripting.registerContentScripts(
+        SCRIPTS.map((s) => ({ ...s, matches: MATCHES, runAt: "document_start", allFrames: true, persistAcrossSessions: true }))
+      );
+    }
+  } catch (err) {
+    // Surfaced in the popup's diagnostics; otherwise this fails silently.
+    regError = String(err?.message || err);
   }
-  if (enabled) {
-    await chrome.scripting.registerContentScripts(
-      SCRIPTS.map((s) => ({ ...s, matches: MATCHES, runAt: "document_start", allFrames: true, persistAcrossSessions: true }))
-    );
-  }
-  await chrome.action.setBadgeBackgroundColor({ color: "#188038" });
-  await chrome.action.setBadgeText({ text: enabled ? "ON" : "" });
+  await chrome.storage.local.set({ regError });
+  await chrome.action.setBadgeBackgroundColor({ color: regError ? "#d93025" : "#188038" });
+  await chrome.action.setBadgeText({ text: regError ? "ERR" : enabled ? "ON" : "" });
 }
 
 chrome.runtime.onInstalled.addListener(sync);
 chrome.runtime.onStartup.addListener(sync);
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg === "flow-unlock-resync") sync();
+});
 chrome.storage.onChanged.addListener((changes) => {
   if ("enabled" in changes) sync();
 });
