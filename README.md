@@ -123,6 +123,7 @@ git clone <repo-url> flow-unlock
 | الحالة «انتبه» ما بتروح | امسح الكوكيز تبع `flow.google.com` وجرّب مرة تانية. |
 | بطّلت تشتغل فجأة بعد فترة | غالباً جوجل غيّر الأرقام الداخلية — شوف القسم الجاي. |
 | الواجهة فتحت بس التوليد بيفشل | جوجل ممكن يفحص الدولة بالسيرفر وقت التوليد؛ هاد خارج قدرة أي إضافة. |
+| بتحوّلني على `/unavailable` | غالبًا دولتك مش مدعومة أو في قيد عالحساب. المجاني (٥٠ كريديت باليوم) موجود بس بالدول المدعومة، وجوجل بتقول إن VPN ما بيفكّ الحظر. الإضافة بتحل فحص الدولة بس وما بتتجاوز هاد. |
 
 ### إذا جوجل غيّر الأرقام (قسم «متقدم»)
 
@@ -215,6 +216,7 @@ Works on any Chromium browser (Edge, Brave, Opera, Arc…).
 | Status stays on the warning state | Clear cookies for `flow.google.com` and retry. |
 | Stopped working after a while | Google likely changed the RPC id or flag index — update them under *Advanced* (find them in DevTools → Network → filter `batchexecute`). |
 | UI opens but generation fails | Google may also enforce region server-side; no extension can change that. |
+| Redirected to `/unavailable` | Usually an unsupported region or an account restriction. The free tier (50 credits/day) exists only in supported countries, and Google says a VPN won't unlock it. The extension only handles the country check and can't bypass this. |
 
 ### Permissions & privacy
 

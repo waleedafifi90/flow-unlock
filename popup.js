@@ -29,7 +29,10 @@ async function refreshStatus() {
 
   const s = JSON.parse(raw);
   const { rpcid = "cPZSdc" } = await chrome.storage.local.get("rpcid");
-  if (s.patched > 0) {
+  if (tab.url.includes("/unavailable")) {
+    // Not the country check: patched can be > 0 here, so test this first.
+    show("Flow رافض فتح هاد الحساب — غالبًا دولتك مش مدعومة أو في قيد عالحساب. المجاني (٥٠ كريديت باليوم) بس بالدول المدعومة، والإضافة بتحل فحص الدولة بس.", "warn");
+  } else if (s.patched > 0) {
     show("تم فتح Flow ✓", "ok");
   } else if (s.seen?.length && !s.seen.includes(rpcid)) {
     show(`جوجل غيّر رقم الطلب. الأرقام اللي ظهرت: ${s.seen.join("، ")} — اضغط «نسخ التشخيص» وابعته.`, "warn");
@@ -52,8 +55,9 @@ $("open").addEventListener("click", () => chrome.tabs.create({ url: FLOW_URL }))
 $("reload").addEventListener("click", async () => {
   const tab = await activeTab();
   if (tab && isFlow(tab.url)) {
-    // Leave the unsupported-country page so the app re-runs its check.
-    chrome.tabs.update(tab.id, { url: tab.url.includes("unsupported-country") ? FLOW_URL : tab.url });
+    // Leave the block pages so the app re-runs its check.
+    const blocked = tab.url.includes("unsupported-country") || tab.url.includes("/unavailable");
+    chrome.tabs.update(tab.id, { url: blocked ? FLOW_URL : tab.url });
   } else {
     chrome.tabs.create({ url: FLOW_URL });
   }
