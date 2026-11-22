@@ -46,7 +46,7 @@ async function syncNow() {
 // ---------------------------------------------------------------- VPS proxy
 // Chrome exposes chrome.proxy.settings (PAC); Firefox exposes chrome.proxy.onRequest
 // (per-request listener). Feature-detect so one shared file serves both.
-const proxyIsChrome = !!(chrome.proxy && chrome.proxy.settings);
+const proxyUsesOnRequest = proxyBackend(chrome.proxy) === "onRequest"; // Firefox vs Chrome PAC
 let ffProxy = null; // Firefox: the active proxy config, or null when off.
 
 // Firefox per-request router: proxy the Google set, everything else direct.
@@ -68,7 +68,7 @@ async function applyProxyState() {
   const decision = proxyDecision(proxyEnabled, proxyConfig);
   try {
     if (decision === "apply") {
-      if (proxyIsChrome) {
+      if (!proxyUsesOnRequest) {
         await chrome.proxy.settings.set({
           value: { mode: "pac_script", pacScript: { data: buildPac(proxyConfig.host, proxyConfig.port) } },
           scope: "regular",
@@ -80,7 +80,7 @@ async function applyProxyState() {
         }
       }
     } else {
-      if (proxyIsChrome) {
+      if (!proxyUsesOnRequest) {
         await chrome.proxy.settings.clear({ scope: "regular" });
       } else {
         ffProxy = null;
@@ -108,7 +108,7 @@ async function proxyCredentials(details) {
 }
 
 if (chrome.webRequest && chrome.webRequest.onAuthRequired) {
-  if (proxyIsChrome) {
+  if (!proxyUsesOnRequest) {
     chrome.webRequest.onAuthRequired.addListener(
       (details, callback) => { proxyCredentials(details).then(callback); },
       { urls: ["<all_urls>"] },

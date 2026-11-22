@@ -24,6 +24,12 @@ test("decision", () => {
   assert.equal(C.proxyDecision(true, { host: "" }), "clear");
 });
 
+test("backend: onRequest wins (Firefox exposes both), settings is Chrome", () => {
+  assert.equal(C.proxyBackend({ onRequest: {}, settings: {} }), "onRequest"); // Firefox
+  assert.equal(C.proxyBackend({ settings: {} }), "settings"); // Chrome
+  assert.equal(C.proxyBackend(null), "none");
+});
+
 test("pac proxies google, direct otherwise", () => {
   const pac = C.buildPac("1.2.3.4", 8443);
   const run = new Function(pac + "\nreturn FindProxyForURL;")();

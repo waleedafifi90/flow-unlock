@@ -40,6 +40,15 @@ function proxyDecision(enabled, config) {
   return enabled && isCompleteProxyConfig(config) ? "apply" : "clear";
 }
 
+// Which proxy API to drive. Firefox exposes proxy.onRequest (and also
+// proxy.settings, with a different schema), so onRequest uniquely marks Firefox;
+// Chrome has only proxy.settings (PAC).
+function proxyBackend(proxyApi) {
+  if (proxyApi && proxyApi.onRequest) return "onRequest";
+  if (proxyApi && proxyApi.settings) return "settings";
+  return "none";
+}
+
 // A PAC that sends matching Google hosts to the proxy and everything else direct.
 // The patterns are inlined as a literal so the function is self-contained in the
 // browser's PAC sandbox, which has no access to this module's scope.
@@ -60,5 +69,5 @@ function buildPac(host, port, patterns = GOOGLE_HOST_PATTERNS) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { GOOGLE_HOST_PATTERNS, matchesProxyHost, isCompleteProxyConfig, proxyDecision, buildPac };
+  module.exports = { GOOGLE_HOST_PATTERNS, matchesProxyHost, isCompleteProxyConfig, proxyDecision, proxyBackend, buildPac };
 }
