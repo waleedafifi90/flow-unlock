@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-SHARED=(background.js engine.js bridge.js popup.html popup.js)
+SHARED=(background.js proxy-core.js engine.js bridge.js popup.html popup.js)
 
 mkdir -p firefox/icons
 for f in "${SHARED[@]}"; do
