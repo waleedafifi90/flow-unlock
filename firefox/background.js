@@ -107,19 +107,27 @@ async function proxyCredentials(details) {
   return {};
 }
 
+// Register the proxy-auth handler, but never let a failure here stop the content
+// scripts below from registering. Firefox needs "webRequestBlocking" for the
+// blocking form; if that permission is missing the addListener throws, and
+// without this guard it would kill the country-unlock registration too.
 if (chrome.webRequest && chrome.webRequest.onAuthRequired) {
-  if (!proxyUsesOnRequest) {
-    chrome.webRequest.onAuthRequired.addListener(
-      (details, callback) => { proxyCredentials(details).then(callback); },
-      { urls: ["<all_urls>"] },
-      ["asyncBlocking"]
-    );
-  } else {
-    chrome.webRequest.onAuthRequired.addListener(
-      proxyCredentials,
-      { urls: ["<all_urls>"] },
-      ["blocking"]
-    );
+  try {
+    if (!proxyUsesOnRequest) {
+      chrome.webRequest.onAuthRequired.addListener(
+        (details, callback) => { proxyCredentials(details).then(callback); },
+        { urls: ["<all_urls>"] },
+        ["asyncBlocking"]
+      );
+    } else {
+      chrome.webRequest.onAuthRequired.addListener(
+        proxyCredentials,
+        { urls: ["<all_urls>"] },
+        ["blocking"]
+      );
+    }
+  } catch (err) {
+    chrome.storage.local.set({ proxyError: "auth listener: " + String(err?.message || err) });
   }
 }
 

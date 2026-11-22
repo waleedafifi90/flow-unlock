@@ -9,7 +9,7 @@
       "strict_min_version": "128.0"
     }
   },
-  "permissions": ["scripting", "storage", "proxy", "webRequest"],
+  "permissions": ["scripting", "storage", "proxy", "webRequest", "webRequestBlocking"],
   "host_permissions": [
     "https://flow.google.com/*",
     "https://labs.google/*",
