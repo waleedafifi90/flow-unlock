@@ -25,8 +25,15 @@ sudo PROXY_USER=myuser PROXY_PASS='a-long-random-password' PROXY_PORT=8443 ./set
   `openssl rand -base64 24`.
 - **Port:** pick a non-default high port (not 8080/3128), e.g. `8443`.
 
-The script installs `3proxy`, writes `/etc/3proxy/3proxy.cfg`, creates a systemd
+The script installs `3proxy` (building it from source when apt has no package —
+Ubuntu 24.04 dropped it), writes `/etc/3proxy/3proxy.cfg`, creates a systemd
 service that starts on boot, and opens the port in `ufw`.
+
+> Keep the password free of spaces and `#` (3proxy parses the config on
+> whitespace). `openssl rand -base64 24` is safe.
+
+If the script isn't executable after copying, run it with `bash setup.sh` (as in
+the command above) or `chmod +x setup.sh` first.
 
 ## 3. Test it
 
