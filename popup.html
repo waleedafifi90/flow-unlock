@@ -80,11 +80,12 @@
     details[open] summary::after { transform: rotate(180deg); }
     .adv { padding: 0 14px 14px; display: grid; gap: 8px; }
     label { color: var(--muted); font-size: 12px; }
-    input[type=text], input[type=number] {
+    input[type=text], input[type=number], input[type=password] {
       display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border-radius: 10px;
       font: inherit; color: var(--text); background: rgba(30,16,36,.55); border: 1px solid var(--line);
     }
-    input[type=text]:focus, input[type=number]:focus { outline: none; border-color: var(--peach); }
+    input[type=text]:focus, input[type=number]:focus, input[type=password]:focus { outline: none; border-color: var(--peach); }
+    .rowtoggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text); font-size: 13px; }
     #diag {
       margin: 0; padding: 10px; max-height: 180px; overflow: auto; border-radius: 10px;
       font: 11px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-all;
@@ -127,6 +128,23 @@
     <button id="open" class="primary">افتح Google Flow</button>
     <button id="reload" class="ghost">تحديث الصفحة</button>
   </div>
+
+  <details id="proxyBox">
+    <summary>بروكسي VPS (اختياري)</summary>
+    <div class="adv">
+      <div class="rowtoggle">مرّر Google عبر الـ VPS
+        <label class="switch" title="تشغيل البروكسي">
+          <input type="checkbox" id="proxyEnabled" aria-label="تشغيل البروكسي" /><span></span>
+        </label>
+      </div>
+      <label>العنوان (IP)<input type="text" id="proxyHost" dir="ltr" placeholder="203.0.113.5" /></label>
+      <label>البورت<input type="number" id="proxyPort" dir="ltr" placeholder="8443" /></label>
+      <label>المستخدم<input type="text" id="proxyUser" dir="ltr" /></label>
+      <label>كلمة السر<input type="password" id="proxyPass" dir="ltr" /></label>
+      <button id="saveProxy" class="ghost">حفظ البروكسي</button>
+      <p id="proxyMsg" class="tagline" style="margin:0"></p>
+    </div>
+  </details>
 
   <details>
     <summary>متقدم (إذا جوجل غيّر الأرقام)</summary>

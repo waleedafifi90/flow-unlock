@@ -68,11 +68,41 @@ $("saveAdv").addEventListener("click", async () => {
   show("انحفظ. حدّث صفحة Flow لتطبيقه.", "ok");
 });
 
+// ---- VPS proxy (optional) ----
+async function loadProxy() {
+  const { proxyEnabled = false, proxyConfig = null } = await chrome.storage.local.get(["proxyEnabled", "proxyConfig"]);
+  $("proxyEnabled").checked = proxyEnabled;
+  if (proxyConfig) {
+    $("proxyHost").value = proxyConfig.host || "";
+    $("proxyPort").value = proxyConfig.port || "";
+    $("proxyUser").value = proxyConfig.username || "";
+    $("proxyPass").value = proxyConfig.password || "";
+  }
+}
+
+$("saveProxy").addEventListener("click", async () => {
+  const config = {
+    host: $("proxyHost").value.trim(),
+    port: Number($("proxyPort").value),
+    username: $("proxyUser").value.trim(),
+    password: $("proxyPass").value,
+  };
+  await chrome.storage.local.set({ proxyConfig: config });
+  $("proxyMsg").textContent = "انحفظ ✓ — إذا البروكسي شغّال، حدّث Flow.";
+});
+
+$("proxyEnabled").addEventListener("change", async (e) => {
+  await chrome.storage.local.set({ proxyEnabled: e.target.checked });
+  $("proxyMsg").textContent = e.target.checked ? "شغّال — حدّث Flow ليسري." : "متوقف — التصفح رجع مباشر.";
+  const tabs = await chrome.tabs.query({ url: "https://flow.google.com/*" });
+  for (const t of tabs) chrome.tabs.reload(t.id);
+});
+
 // Everything needed to tell why it fails on a given machine, as copyable text.
 async function collectDiagnostics() {
   chrome.runtime.sendMessage("flow-unlock-resync").catch(() => {});
   const tab = await activeTab();
-  const stored = await chrome.storage.local.get(["enabled", "regError", "rpcid", "flagIndex"]);
+  const stored = await chrome.storage.local.get(["enabled", "regError", "rpcid", "flagIndex", "proxyEnabled", "proxyConfig", "proxyError"]);
   let registered = [];
   try { registered = (await chrome.scripting.getRegisteredContentScripts()).map((s) => `${s.id}@${s.world}`); } catch (e) { registered = [String(e)]; }
   let page = null;
@@ -87,6 +117,12 @@ async function collectDiagnostics() {
     regError: stored.regError ?? null,
     registered,
     overrides: { rpcid: stored.rpcid ?? null, flagIndex: stored.flagIndex ?? null },
+    proxy: {
+      enabled: stored.proxyEnabled ?? false,
+      // configured, never the password itself
+      configured: !!(stored.proxyConfig && stored.proxyConfig.host && stored.proxyConfig.username),
+      error: stored.proxyError ?? null
+    },
     tab: url ? url.origin + url.pathname : null,
     page
   };
@@ -108,4 +144,5 @@ chrome.storage.local.get(["rpcid", "flagIndex"]).then(({ rpcid, flagIndex }) => 
   if (rpcid) $("rpcid").value = rpcid;
   if (flagIndex !== undefined) $("flagIndex").value = flagIndex;
 });
+loadProxy();
 refreshStatus();
