@@ -24,8 +24,11 @@ if (!CREDS.username || !CREDS.password) {
   console.error("Set PROXY_USER and PROXY_PASS."); process.exit(1);
 }
 
-const SWEEP_MS = 5000;
-const TIMEOUT_MS = 30000;
+// The extension heartbeats via chrome.alarms, which Chrome clamps to a 30s
+// minimum, so the timeout must clear ~3 missed beats to avoid evicting a live
+// client between beats.
+const SWEEP_MS = 15000;
+const TIMEOUT_MS = 90000;
 const state = createState(LIMIT);
 setInterval(() => sweep(state, Date.now(), TIMEOUT_MS), SWEEP_MS).unref();
 
