@@ -29,3 +29,18 @@ test("no/garbled response falls back to direct (proxy on)", () => {
   assert.equal(slotDecision(null).state, "direct");
   assert.equal(slotDecision({}).state, "direct");
 });
+
+test("a failed beat while queued keeps the user queued, not direct", () => {
+  const prev = { state: "queued", position: 3, total: 10 };
+  assert.deepEqual(slotDecision(null, prev), { applyProxy: false, state: "queued", position: 3, total: 10 });
+});
+
+test("a failed beat with no prior queue still falls back to direct", () => {
+  assert.equal(slotDecision(null, { state: "active" }).state, "direct");
+  assert.equal(slotDecision(null, { state: "direct" }).state, "direct");
+  assert.equal(slotDecision(null).state, "direct");
+});
+
+test("a real response ignores prior state", () => {
+  assert.equal(slotDecision({ status: "active" }, { state: "queued" }).state, "active");
+});
