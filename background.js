@@ -165,7 +165,8 @@ async function onBeat() {
   if (!proxyEnabled) return stopBeat();
   const cfg = slotCfg(proxyConfig, slotConfig);
   if (!isSlotConfigured(cfg)) return; // direct mode: nothing to beat
-  const dec = slotDecision(await slotBeat(cfg, "/heartbeat", await getClientId()));
+  // Pass the prior status so a failed beat keeps a queued user queued (not direct).
+  const dec = slotDecision(await slotBeat(cfg, "/heartbeat", await getClientId()), slotStatus);
   await setProxy(dec.applyProxy, proxyConfig);
   await writeStatus(dec);
   // Just promoted from the queue → reload Flow so it retries with the proxy on.

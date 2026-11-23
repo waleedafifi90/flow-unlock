@@ -26,14 +26,22 @@ function slotBody(cfg, clientId) {
 }
 
 // Turn the server's parsed response into a decision for the background script.
-// A null/garbled/unknown response (service down or unconfigured) falls back to
-// "direct": turn the proxy on anyway, so a server outage never strands the user.
-function slotDecision(resp) {
+// A real response is honored as-is. A null/garbled/unknown response means the
+// service is down or unconfigured; then:
+//   - if the client was already queued (prev.state === "queued"), KEEP it queued
+//     (proxy stays off). Falling to "direct" here would briefly admit a queued
+//     user on every failed heartbeat and defeat the cap — the spec's anti-goal.
+//   - otherwise fall back to "direct" (proxy on), so first contact / a new user
+//     is never stranded by a transient outage.
+function slotDecision(resp, prev) {
   if (resp && resp.status === "active") {
     return { applyProxy: true, state: "active", position: resp.position ?? 0, total: resp.total ?? 1 };
   }
   if (resp && resp.status === "queued") {
     return { applyProxy: false, state: "queued", position: resp.position ?? 0, total: resp.total ?? 0 };
+  }
+  if (prev && prev.state === "queued") {
+    return { applyProxy: false, state: "queued", position: prev.position ?? 0, total: prev.total ?? 0 };
   }
   return { applyProxy: true, state: "direct" };
 }

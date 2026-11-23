@@ -121,6 +121,8 @@ sudo PROXY_USER=myuser PROXY_PASS='the-proxy-password' SLOT_LIMIT=20 SLOT_PORT=8
 - `SLOT_LIMIT` — max active users at once (default 20). Change it any time and
   `sudo systemctl restart flow-slot-manager`.
 - `SLOT_PORT` — a port **different** from the proxy port (default 8444).
+- Needs **Node ≥ 18**. `setup.sh` checks and stops with install instructions if the
+  system Node is older (e.g. the apt `nodejs` on Ubuntu 20.04).
 
 In the extension's proxy section, enter this port in **"بورت الطابور"** (same IP,
 user, and password as the proxy). The extension will ask for permission to reach

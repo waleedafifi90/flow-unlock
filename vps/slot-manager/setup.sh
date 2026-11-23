@@ -28,6 +28,17 @@ fi
 NODE="$(command -v node)"
 [ -n "$NODE" ] || { echo "node not found after install." >&2; exit 1; }
 
+# The service uses modern JS (??, optional chaining), so require Node >= 18.
+# Older apt nodejs (e.g. v10 on Ubuntu 20.04) would fail to parse and the unit
+# would just loop on Restart=on-failure, leaving the queue silently dead.
+NODE_MAJOR="$("$NODE" -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
+if [ "$NODE_MAJOR" -lt 18 ]; then
+  echo "Node $(${NODE} -v) is too old; need >= 18." >&2
+  echo "Install a current Node, e.g.:" >&2
+  echo "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs" >&2
+  exit 1
+fi
+
 # --- Install the service files ------------------------------------------------
 APP=/opt/flow-slot-manager
 install -d "$APP"
