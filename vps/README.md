@@ -97,6 +97,39 @@ proxy -a -p8443
 Separate accounts also let you revoke one person without changing everyone's
 password, and make it easy to see who is using how much.
 
+## Slot queue (optional)
+
+Caps how many people use the proxy at once and puts everyone beyond the cap in a
+first-come queue, with their position shown in the extension popup. When an active
+user leaves, the next in line is let in automatically. Without this, extra users
+just compete for bandwidth.
+
+It is a tiny Node service (`slot-manager/`) that runs next to 3proxy and uses the
+**same** proxy username/password — no new secret.
+
+```bash
+scp -r vps/slot-manager youruser@YOUR_VPS_IP:~/flow-slot-manager
+```
+
+Then on the VPS, with the same credentials as the proxy:
+
+```bash
+cd ~/flow-slot-manager
+sudo PROXY_USER=myuser PROXY_PASS='the-proxy-password' SLOT_LIMIT=20 SLOT_PORT=8444 ./setup.sh
+```
+
+- `SLOT_LIMIT` — max active users at once (default 20). Change it any time and
+  `sudo systemctl restart flow-slot-manager`.
+- `SLOT_PORT` — a port **different** from the proxy port (default 8444).
+
+In the extension's proxy section, enter this port in **"بورت الطابور"** (same IP,
+user, and password as the proxy). The extension will ask for permission to reach
+the VPS. **If you skip this service, or leave the slot port blank, the proxy works
+exactly as before — no queue.**
+
+Manage it: `sudo systemctl status flow-slot-manager`, `... restart ...`,
+`sudo journalctl -u flow-slot-manager -e`.
+
 ## Keeping the IP off Google's radar
 
 Honest framing first: **no proxy setting reliably prevents Google from blocking
