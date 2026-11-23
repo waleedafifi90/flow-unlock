@@ -95,6 +95,26 @@ git clone <repo-url> flow-unlock
 
 > بتشتغل كمان على Edge وBrave وOpera وArc وأي متصفح مبني على Chromium.
 
+#### فايرفوكس (نسخة منفصلة بمجلد `firefox/`)
+
+بتحتاج **فايرفوكس 128 أو أحدث** (قبل هيك ما بيدعم حقن السكربت بعالم الصفحة).
+
+1. حدّث مجلد `firefox/` من المصدر المشترك (مرة وحدة، وكل ما تعدّل الكود):
+
+</div>
+
+```bash
+./build-firefox.sh
+```
+
+<div dir="rtl">
+
+2. افتح `about:debugging#/runtime/this-firefox`.
+3. اضغط **Load Temporary Add-on** واختار الملف `firefox/manifest.json`.
+4. افتح Flow. إذا طلعت علامة `ERR` عالأيقونة، روح على `about:addons` ← الإضافة ← **Permissions** واسمح بالوصول لـ `flow.google.com`، لأن فايرفوكس بيعتبر صلاحية الموقع اختيارية.
+
+> النسخة المؤقتة بتروح لما تسكّر فايرفوكس. للتثبيت الدائم لازم توقّع الإضافة من [addons.mozilla.org](https://addons.mozilla.org).
+
 ### الاستخدام
 
 1. اضغط أيقونة **Flow Unlock** وتأكد إنه المفتاح شغّال.
@@ -200,6 +220,15 @@ Flow Unlock injects `engine.js` into the page at `document_start`, wraps `fetch`
 4. Pin the icon from the 🧩 menu.
 
 Works on any Chromium browser (Edge, Brave, Opera, Arc…).
+
+**Firefox** (separate build in `firefox/`): needs **Firefox 128+** (earlier versions can't inject into the page world).
+
+1. Sync the shared files once (and after any code change): `./build-firefox.sh`
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Click **Load Temporary Add-on** and pick `firefox/manifest.json`.
+4. Open Flow. If the icon shows `ERR`, go to `about:addons` → the extension → **Permissions** and allow access to `flow.google.com` — Firefox treats host access as optional.
+
+A temporary add-on is removed when Firefox closes; a permanent install must be signed via [addons.mozilla.org](https://addons.mozilla.org).
 
 ### Usage
 
