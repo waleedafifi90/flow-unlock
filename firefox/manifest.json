@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Flow Unlock",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "يفتح Google Flow من أي دولة بتعديل فحص الدولة داخل المتصفح، بدون بروكسي أو VPN.",
   "browser_specific_settings": {
     "gecko": {
