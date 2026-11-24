@@ -69,8 +69,18 @@ $("saveAdv").addEventListener("click", async () => {
 });
 
 // ---- VPS proxy (optional) ----
+function renderSlot(slotStatus) {
+  if (!slotStatus || slotStatus.state === "none") return ($("slotMsg").textContent = "");
+  if (slotStatus.state === "queued") {
+    $("slotMsg").textContent = `بالطابور: دورك رقم ${slotStatus.position} من ${slotStatus.total} — خلّي المتصفح مفتوح.`;
+  } else {
+    $("slotMsg").textContent = "نشط ✓"; // direct or active
+  }
+}
+
 async function loadProxy() {
-  const { proxyEnabled = false, proxyConfig = null } = await chrome.storage.local.get(["proxyEnabled", "proxyConfig"]);
+  const { proxyEnabled = false, proxyConfig = null, slotConfig = null, slotStatus = null } =
+    await chrome.storage.local.get(["proxyEnabled", "proxyConfig", "slotConfig", "slotStatus"]);
   $("proxyEnabled").checked = proxyEnabled;
   if (proxyConfig) {
     $("proxyHost").value = proxyConfig.host || "";
@@ -78,6 +88,8 @@ async function loadProxy() {
     $("proxyUser").value = proxyConfig.username || "";
     $("proxyPass").value = proxyConfig.password || "";
   }
+  if (slotConfig && slotConfig.port) $("slotPort").value = slotConfig.port;
+  renderSlot(slotStatus);
 }
 
 $("saveProxy").addEventListener("click", async () => {
@@ -87,8 +99,24 @@ $("saveProxy").addEventListener("click", async () => {
     username: $("proxyUser").value.trim(),
     password: $("proxyPass").value,
   };
+  const slotPort = Number($("slotPort").value);
   await chrome.storage.local.set({ proxyConfig: config });
   $("proxyMsg").textContent = "انحفظ ✓ — إذا البروكسي شغّال، حدّث Flow.";
+
+  if (Number.isInteger(slotPort) && slotPort > 0) {
+    await chrome.storage.local.set({ slotConfig: { port: slotPort } });
+    // Reaching http://host:port needs host access; ask for it on this click.
+    let granted = true;
+    try {
+      granted = await chrome.permissions.request({ origins: ["http://" + config.host + "/*"] });
+    } catch { granted = false; }
+    $("slotMsg").textContent = granted
+      ? "الطابور مفعّل ✓"
+      : "ما في صلاحية الوصول للسيرفر — البروكسي رح يشتغل مباشرة بدون طابور.";
+  } else {
+    await chrome.storage.local.remove("slotConfig");
+    $("slotMsg").textContent = "";
+  }
 });
 
 $("proxyEnabled").addEventListener("change", async (e) => {
@@ -102,13 +130,23 @@ $("proxyEnabled").addEventListener("change", async (e) => {
 async function collectDiagnostics() {
   chrome.runtime.sendMessage("flow-unlock-resync").catch(() => {});
   const tab = await activeTab();
-  const stored = await chrome.storage.local.get(["enabled", "regError", "rpcid", "flagIndex", "proxyEnabled", "proxyConfig", "proxyError"]);
+  const stored = await chrome.storage.local.get(["enabled", "regError", "rpcid", "flagIndex", "proxyEnabled", "proxyConfig", "proxyError", "slotConfig", "slotStatus"]);
   let registered = [];
   try { registered = (await chrome.scripting.getRegisteredContentScripts()).map((s) => `${s.id}@${s.world}`); } catch (e) { registered = [String(e)]; }
   let page = null;
   if (tab && isFlow(tab.url)) {
     try { page = JSON.parse(await chrome.tabs.sendMessage(tab.id, "flow-unlock-status")); } catch { page = "no response from page script"; }
   }
+  // Who controls the browser's proxy setting. "controlled_by_other_extensions"
+  // means another extension/VPN is winning and ours is ignored — the usual reason
+  // the proxy works in curl but not here.
+  let proxyControl = null;
+  try {
+    const s = await new Promise((res, rej) => {
+      try { const p = chrome.proxy.settings.get({}, res); if (p && p.then) p.then(res, rej); } catch (e) { rej(e); }
+    });
+    proxyControl = s?.levelOfControl ?? null;
+  } catch (e) { proxyControl = String(e?.message || e); }
   const url = tab?.url ? new URL(tab.url) : null;
   return {
     extension: chrome.runtime.getManifest().version,
@@ -121,7 +159,14 @@ async function collectDiagnostics() {
       enabled: stored.proxyEnabled ?? false,
       // configured, never the password itself
       configured: !!(stored.proxyConfig && stored.proxyConfig.host && stored.proxyConfig.username),
+      port: stored.proxyConfig?.port ?? null,
+      control: proxyControl,
       error: stored.proxyError ?? null
+    },
+    slot: {
+      configured: !!(stored.slotConfig && stored.slotConfig.port),
+      state: stored.slotStatus?.state ?? null,
+      position: stored.slotStatus?.position ?? null
     },
     tab: url ? url.origin + url.pathname : null,
     page
@@ -144,5 +189,11 @@ chrome.storage.local.get(["rpcid", "flagIndex"]).then(({ rpcid, flagIndex }) => 
   if (rpcid) $("rpcid").value = rpcid;
   if (flagIndex !== undefined) $("flagIndex").value = flagIndex;
 });
+// Keep the slot line live while the popup is open (the background updates it on
+// each heartbeat / promotion).
+chrome.storage.onChanged.addListener((changes) => {
+  if ("slotStatus" in changes) renderSlot(changes.slotStatus.newValue);
+});
+
 loadProxy();
 refreshStatus();
