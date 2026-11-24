@@ -137,6 +137,16 @@ async function collectDiagnostics() {
   if (tab && isFlow(tab.url)) {
     try { page = JSON.parse(await chrome.tabs.sendMessage(tab.id, "flow-unlock-status")); } catch { page = "no response from page script"; }
   }
+  // Who controls the browser's proxy setting. "controlled_by_other_extensions"
+  // means another extension/VPN is winning and ours is ignored — the usual reason
+  // the proxy works in curl but not here.
+  let proxyControl = null;
+  try {
+    const s = await new Promise((res, rej) => {
+      try { const p = chrome.proxy.settings.get({}, res); if (p && p.then) p.then(res, rej); } catch (e) { rej(e); }
+    });
+    proxyControl = s?.levelOfControl ?? null;
+  } catch (e) { proxyControl = String(e?.message || e); }
   const url = tab?.url ? new URL(tab.url) : null;
   return {
     extension: chrome.runtime.getManifest().version,
@@ -149,6 +159,8 @@ async function collectDiagnostics() {
       enabled: stored.proxyEnabled ?? false,
       // configured, never the password itself
       configured: !!(stored.proxyConfig && stored.proxyConfig.host && stored.proxyConfig.username),
+      port: stored.proxyConfig?.port ?? null,
+      control: proxyControl,
       error: stored.proxyError ?? null
     },
     slot: {
